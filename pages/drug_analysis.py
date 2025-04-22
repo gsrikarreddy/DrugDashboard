@@ -1,4 +1,3 @@
-# pages/drug_analysis.py
 import dash
 from dash import dcc, html, Input, Output
 import plotly.graph_objs as go
