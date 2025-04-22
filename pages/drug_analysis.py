@@ -3,6 +3,7 @@ import dash
 from dash import dcc, html, Input, Output
 import plotly.graph_objs as go
 import plotly.express as px
+import json
 
 from utils.data import generate_fake_data, generate_dummy_county_mentions, generate_dummy_posts
 from utils.layout_components import make_posts_table
@@ -11,6 +12,9 @@ dash.register_page(__name__, path_template="/drug/<drug_name>")
 
 geojson_url = "https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json"
 
+with open("data/chemical_list_email.json", "r") as f:
+    drug_data = json.load(f)
+
 layout = html.Div([
     dcc.Location(id='url', refresh=False),
 
@@ -18,7 +22,10 @@ layout = html.Div([
         dcc.Link("← Back to Home", href="/", className="back-link")
     ], style={'textAlign': 'left'}),
 
-    html.H2(id='drug-title', style={'textAlign': 'center'}),
+    html.Div([
+        html.H2(id='drug-title', style={'textAlign': 'center'}),
+        html.Img(id='structure-img', style={'height': '220px', 'margin': 'auto', 'display': 'block'})
+    ]),
 
     html.Div([
         dcc.Graph(id='drug-trend-graph', style={'flex': 2}),
@@ -30,15 +37,22 @@ layout = html.Div([
 
 @dash.callback(
     Output('drug-title', 'children'),
+    Output('structure-img', 'src'),
     Output('drug-trend-graph', 'figure'),
     Output('hotspot-map', 'figure'),
     Output('top-posts-table', 'children'),
     Input('url', 'pathname')
 )
+
 def display_drug_analysis(pathname):
     drug = pathname.split("/")[-1]
     df_trend = generate_fake_data(drug)
 
+    # Structure Image
+    cid = drug_data.get(drug, {}).get("PubChemCID")
+    img_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/PNG" if cid else None
+
+    # Trend Graph
     line_fig = go.Figure()
     line_fig.add_trace(go.Scatter(x=df_trend['Date'], y=df_trend['Mentions'], mode='lines+markers', name=drug))
     line_fig.update_layout(title=f"Trend of {drug}", xaxis_title="Date", yaxis_title="Mentions", template="plotly_white")
@@ -51,4 +65,4 @@ def display_drug_analysis(pathname):
     map_fig.update_traces(marker_line_width=0)
     map_fig.update_layout(title="County-level Mentions (Simulated)", geo=dict(lakecolor="white", bgcolor="white"), height=600)
 
-    return f"Drug Analysis: {drug}", line_fig, map_fig, table_html
+    return f"Drug Analysis: {drug}", img_url, line_fig, map_fig, table_html
