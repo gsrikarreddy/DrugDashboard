@@ -4,6 +4,10 @@ import json
 import plotly.graph_objs as go
 import pandas as pd
 import numpy as np
+from utils.layout_components import drug_emoji_table
+
+
+
 
 from utils.data import generate_dummy_trending
 dash.register_page(__name__, path="/")
@@ -40,25 +44,25 @@ layout = html.Div([
         )
     ], className="radio-box"),
 
-    dcc.Graph(id='trending-line-chart'),
-
+    # 🆕 Line Chart and Pie Chart side by side
     html.Div([
-        dcc.Graph(id='trending-pie-chart', style={'width': '50%'}),
-        dcc.Graph(id='keyword-bar-chart', style={'width': '50%'})
-    ], style={'display': 'flex', 'justifyContent': 'center'}),
+        dcc.Graph(id='trending-line-chart', style={'width': '70%', 'height': '500px'}),
+        dcc.Graph(id='trending-pie-chart', style={'width': '30%', 'height': '400px'})
+    ], style={'display': 'flex', 'justifyContent': 'space-between', 'alignItems': 'start', 'gap': '20px', 'marginBottom': '30px'}),
+
+    # 🆕 Keyword Chart and Emoji Table side by side
+    html.Div([
+        dcc.Graph(id='keyword-bar-chart', style={'width': '60%', 'height': '500px'}),
+        html.Div(
+            drug_emoji_table(["Fentanyl", "Xylazine", "Metonitazene", "Flubromazepam", "MDMA"]),
+            style={'width': '40%', 'padding': '20px'}
+        )
+    ], style={'display': 'flex', 'justifyContent': 'space-between', 'alignItems': 'start', 'gap': '20px', 'marginBottom': '30px'}),
 
     dcc.Location(id='redirect', refresh=True)
 ])
 
 
-@dash.callback(
-    Output('redirect', 'pathname'),
-    Input('drug-dropdown', 'value')
-)
-def go_to_drug_page(drug):
-    if drug:
-        return f"/drug/{drug}"
-    return dash.no_update
 
 
 @dash.callback(
@@ -130,8 +134,26 @@ def update_keywords_chart(selected_range):
 
 
 @dash.callback(
-    Output('selected-drug-text', 'children'),
-    Input('drug-dropdown', 'value')
+    Output('redirect', 'pathname'),
+    Input('drug-dropdown', 'value'),
+    Input('trending-line-chart', 'clickData'),
+    Input('time-range', 'value'),
+    prevent_initial_call=True
 )
-def show_selected_drug(drug):
-    return f"Selected Drug: {drug}" if drug else ""
+def redirect_based_on_selection(drug, clickData, selected_range):
+    # Case 1: Dropdown selection
+    if drug:
+        return f"/drug/{drug}"
+
+    # Case 2: Line chart click
+    if clickData:
+        clicked_drug = clickData['points'][0]['curveNumber']
+        df = generate_dummy_trending(selected_range)  # match the selected trending range
+        drug_names = list(df.columns[1:])
+        if 0 <= clicked_drug < len(drug_names):
+            selected_drug = drug_names[clicked_drug]
+            return f"/drug/{selected_drug}"
+
+    # Default: No update
+    return dash.no_update
+

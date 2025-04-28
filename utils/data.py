@@ -1,6 +1,24 @@
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
+import random
+
+DRUG_EMOJIS = {
+    "Fentanyl": ["💀", "☠️", "⚰️"],
+    "Xylazine": ["🐎", "🧪", "💉"],
+    "Metonitazene": ["💊", "🧬", "🧪"],
+    "Flubromazepam": ["🧪", "🧫", "🧬"],
+    "MDMA": ["😵‍💫", "🎉", "🧠"],
+    "LSD": ["🎨", "🌈", "🌀"],
+    "Morphine": ["💉", "🛌", "🏥"],
+    "Oxymorphone": ["🔬", "💊", "🏥"],
+    "Gabapentin": ["🧠", "💊", "🛌"],
+    "Codeine": ["🍷", "😴", "💊"],
+    "Methamphetamine": ["⚡", "🔥", "💥"],
+    "Diphenhydramine": ["🛌", "🌙", "💤"],
+    "Pentylone": ["💣", "🚀", "🔥"],
+    "Hydrocodone": ["🏥", "💊", "😷"]
+}   
 
 def generate_fake_data(drug_name):
     today = datetime.today()
